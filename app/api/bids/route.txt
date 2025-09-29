@@ -1,0 +1,73 @@
+// app/api/lots/route.ts
+export const runtime = "nodejs";
+
+import { NextRequest } from "next/server";
+import { prisma } from "@/lib/prisma";
+
+// GET: لیست لات‌ها
+export async function GET() {
+  const lots = await prisma.lot.findMany({
+    orderBy: { createdAt: "desc" },
+  });
+  return Response.json({ lots });
+}
+
+// POST: ساخت لات جدید
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+  const { id, title, category, basePrice, endAt, images, description } = body;
+
+  if (!id || !title || !category || !basePrice || !endAt) {
+    return new Response("bad request", { status: 400 });
+  }
+
+  const created = await prisma.lot.create({
+    data: {
+      id,
+      title,
+      category,
+      basePrice: Number(basePrice),
+      currentPrice: Number(basePrice),
+      endAt: new Date(endAt),
+      images: images ?? [],
+      description: description ?? null,
+      status: "ACTIVE",
+    },
+  });
+
+  return Response.json({ lot: created });
+}
+
+// PUT: ویرایش لات
+export async function PUT(req: NextRequest) {
+  const body = await req.json();
+  const { id, ...rest } = body;
+  if (!id) return new Response("id required", { status: 400 });
+
+  const updated = await prisma.lot.update({
+    where: { id },
+    data: {
+      ...("title" in rest ? { title: rest.title } : {}),
+      ...("category" in rest ? { category: rest.category } : {}),
+      ...("basePrice" in rest ? { basePrice: Number(rest.basePrice) } : {}),
+      ...("currentPrice" in rest ? { currentPrice: Number(rest.currentPrice) } : {}),
+      ...("endAt" in rest ? { endAt: new Date(rest.endAt) } : {}),
+      ...("images" in rest ? { images: rest.images ?? [] } : {}),
+      ...("description" in rest ? { description: rest.description ?? null } : {}),
+      ...("status" in rest ? { status: rest.status } : {}),
+    },
+  });
+
+  return Response.json({ lot: updated });
+}
+
+// DELETE: حذف لات (?id=...)
+export async function DELETE(req: NextRequest) {
+  const id = new URL(req.url).searchParams.get("id");
+  if (!id) return new Response("id required", { status: 400 });
+
+  await prisma.bid.deleteMany({ where: { lotId: id } });
+  await prisma.lot.delete({ where: { id } });
+
+  return Response.json({ ok: true });
+}

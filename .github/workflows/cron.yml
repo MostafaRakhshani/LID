@@ -1,0 +1,17 @@
+name: Close Ended Lots
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"   # هر ۱۰ دقیقه
+  workflow_dispatch: {}
+
+jobs:
+  run-cron:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call cron endpoint
+        run: |
+          curl -fsSL "$BASE_URL/api/cron/close-ended?token=$CRON_TOKEN"
+        env:
+          BASE_URL: ${{ secrets.BASE_URL }}   # مثلا https://lid-auction-mvp.vercel.app
+          CRON_TOKEN: ${{ secrets.CRON_TOKEN }} # lid-cron-abc123

@@ -1,0 +1,10 @@
+@import "cropperjs/dist/cropper.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html { direction: rtl; }
+body { @apply bg-gray-50 text-gray-900; font-family: Vazirmatn, system-ui, -apple-system, Segoe UI, Roboto, Arial, Noto Sans, Liberation Sans, sans-serif; }
+.container { @apply max-w-6xl mx-auto px-4; }
+.card { @apply bg-white rounded-2xl shadow-[0_4px_16px_rgba(0,0,0,0.08)] p-4; }

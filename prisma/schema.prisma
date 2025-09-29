@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum LotStatus {
+  OPEN
+  CLOSED
+}
+
+model Lot {
+  id           String    @id
+  title        String
+  category     String
+  basePrice    Int
+  currentPrice Int
+  startAt      DateTime  @default(now())
+  endAt        DateTime
+  imageUrl     String
+  description  String?
+  status       LotStatus @default(OPEN)
+  closedAt     DateTime?
+  winnerBidId  String?   @unique
+  winnerBid    Bid?      @relation("WinningBid", fields: [winnerBidId], references: [id])
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  bids         Bid[]
+
+  @@index([endAt])
+}
+
+model Bid {
+  id        String   @id @default(cuid())
+  lotId     String
+  lot       Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  amount    Int
+  createdAt DateTime @default(now())
+
+  // طرف مقابل رابطه winnerBid در Lot (ستون جدیدی ایجاد نمی‌کند)
+  winningOf Lot? @relation("WinningBid")
+}

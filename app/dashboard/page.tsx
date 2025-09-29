@@ -1,0 +1,1 @@
+export default function Page(){return <div className='card'><h1 className='text-xl font-bold mb-2'>پنل من</h1><p className='text-gray-700'>در نسخهٔ فعلی اطلاعات واقعی ذخیره نمی‌شود.</p></div>}

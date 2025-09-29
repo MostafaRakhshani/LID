@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/close-ended?token=lid-cron-abc123",
+      "schedule": "0 2 * * *"
+    }
+  ]
+}

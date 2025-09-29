@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="320" viewBox="0 0 800 320">
+<rect width="800" height="320" fill="#0B1F3B"/>
+<g>
+<rect x="100" y="90" width="28" height="140" rx="6" fill="#FFFFFF"/><rect x="100" y="202" width="110" height="28" rx="6" fill="#FFFFFF"/><rect x="260" y="120" width="60" height="110" rx="10" fill="#FFFFFF"/><rect x="250" y="95" width="80" height="18" rx="4" fill="#0EA5A6" transform="rotate(-8 290 104)"/><rect x="360" y="100" width="110" height="128" rx="16" fill="none" stroke="#FFFFFF" stroke-width="28"/><path d="M 372 116 A 52 52 0 0 1 468 116" stroke="#0EA5A6" stroke-width="10" fill="none"/><text x="520" y="165" font-family="Inter,IRANSansX,Vazirmatn,sans-serif" font-size="72" font-weight="700" fill="#FFFFFF">LID</text><text x="520" y="210" font-family="Vazirmatn,IRANSansX,Inter,sans-serif" font-size="28" font-weight="400" fill="#FFFFFF">لید</text></g>
+</svg>
