@@ -1,26 +1,19 @@
-# dependencies
+var/
+bids.csv
+# Node/Next
 node_modules/
-pnpm-lock.yaml
-yarn.lock
-package-lock.json
-
-# next.js
 .next/
 out/
-
-# env & local
-.env*
-!.env.example
-.vercel/
-
-# logs & misc
+dist/
+coverage/
 npm-debug.log*
 yarn-debug.log*
-pnpm-debug.log*
-*.log
-.DS_Store
-Thumbs.db
+yarn-error.log*
 
-# project-specific
-bids.csv
-var/
+# Env & local
+.env*
+.vercel/
+.DS_Store
+
+# Misc
+*.log
