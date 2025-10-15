@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 enum LotStatus {
@@ -13,33 +14,13 @@ enum LotStatus {
 }
 
 model Lot {
-  id           String    @id
+  id           String    @id // e.g. LOT-001
   title        String
-  category     String
+  status       LotStatus @default(OPEN)
   basePrice    Int
   currentPrice Int
-  startAt      DateTime  @default(now())
-  endAt        DateTime
-  imageUrl     String
-  description  String?
-  status       LotStatus @default(OPEN)
-  closedAt     DateTime?
-  winnerBidId  String?   @unique
-  winnerBid    Bid?      @relation("WinningBid", fields: [winnerBidId], references: [id])
+  endAt        DateTime?
+  imageUrl     String?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
-  bids         Bid[]
-
-  @@index([endAt])
-}
-
-model Bid {
-  id        String   @id @default(cuid())
-  lotId     String
-  lot       Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
-  amount    Int
-  createdAt DateTime @default(now())
-
-  // طرف مقابل رابطه winnerBid در Lot (ستون جدیدی ایجاد نمی‌کند)
-  winningOf Lot? @relation("WinningBid")
 }
