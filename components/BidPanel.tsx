@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -33,7 +33,7 @@ export default function BidPanel({ lotId, basePrice, initialEndAt, initialPrice 
     setTimeout(() => setToasts((prev) => prev.filter((x) => x.id !== id)), 3500);
   };
 
-  // هر 8 ثانیه وضعیت را بگیر
+  // ?? 8 ????? ????? ?? ????
   useEffect(() => {
     let stop = false;
     async function tick() {
@@ -43,11 +43,11 @@ export default function BidPanel({ lotId, basePrice, initialEndAt, initialPrice 
         const j = await res.json();
         if (!stop) {
           setData({ currentPrice: j.currentPrice, endAt: j.endAt, status: j.status });
-          // اگر قیمت عوض شد، ورودی را هم همگام کن (جزء کوچکِ UX)
+          // ??? ???? ??? ??? ????? ?? ?? ????? ?? (??? ????? UX)
           setAmount(j.currentPrice);
         }
       } catch {
-        /* نادیده می‌گیریم */
+        /* ?????? ???????? */
       } finally {
         if (!stop) setTimeout(tick, 8000);
       }
@@ -64,11 +64,11 @@ export default function BidPanel({ lotId, basePrice, initialEndAt, initialPrice 
   const placeBid = async () => {
     if (loading) return;
     if (isClosed) {
-      showToast({ kind: "error", text: "مزایده تمام شده است." });
+      showToast({ kind: "error", text: "?????? ???? ??? ???." });
       return;
     }
     if (amount < (data.currentPrice ?? basePrice) + minStep) {
-      showToast({ kind: "error", text: `حداقل ${minStep.toLocaleString("fa-IR")} تومان بیشتر از قیمت فعلی بزنید.` });
+      showToast({ kind: "error", text: `????? ${minStep.toLocaleString("fa-IR")} ????? ????? ?? ???? ???? ?????.` });
       return;
     }
     setLoading(true);
@@ -80,15 +80,15 @@ export default function BidPanel({ lotId, basePrice, initialEndAt, initialPrice 
       });
       if (!res.ok) {
         const msg = await res.text().catch(() => "");
-        showToast({ kind: "error", text: msg || "ثبت پیشنهاد ناموفق بود." });
+        showToast({ kind: "error", text: msg || "??? ??????? ?????? ???." });
         return;
       }
       const j = (await res.json()) as FetchState;
       setData({ currentPrice: j.currentPrice, endAt: j.endAt, status: j.status });
       setAmount(j.currentPrice);
-      showToast({ kind: "success", text: "پیشنهاد شما ثبت شد." });
+      showToast({ kind: "success", text: "??????? ??? ??? ??." });
     } catch {
-      showToast({ kind: "error", text: "خطای شبکه. دوباره تلاش کنید." });
+      showToast({ kind: "error", text: "???? ????. ?????? ???? ????." });
     } finally {
       setLoading(false);
     }
@@ -96,7 +96,7 @@ export default function BidPanel({ lotId, basePrice, initialEndAt, initialPrice 
 
   return (
     <div className="rounded-xl border p-4">
-      {/* توست‌ها */}
+      {/* ??????? */}
       <div className="pointer-events-none fixed right-4 top-4 z-50 space-y-2">
         {toasts.map((t) => (
           <div
@@ -112,17 +112,17 @@ export default function BidPanel({ lotId, basePrice, initialEndAt, initialPrice 
       </div>
 
       <div className="text-sm text-gray-600 mb-1">
-        وضعیت:{" "}
+        ?????:{" "}
         <span className={isClosed ? "text-rose-600" : "text-emerald-700"}>
-          {isClosed ? "پایان یافته" : "باز"}
+          {isClosed ? "????? ?????" : "???"}
         </span>
       </div>
 
       <div className="text-sm text-gray-600 mb-1">
-        قیمت فعلی: <span className="font-semibold">{(data.currentPrice ?? basePrice).toLocaleString("fa-IR")} تومان</span>
+        ???? ????: <span className="font-semibold">{(data.currentPrice ?? basePrice).toLocaleString("fa-IR")} ?????</span>
       </div>
       <div className="text-sm text-gray-600 mb-3">
-        حداقل گام: <span className="font-semibold">{minStep.toLocaleString("fa-IR")} تومان</span>
+        ????? ???: <span className="font-semibold">{minStep.toLocaleString("fa-IR")} ?????</span>
       </div>
 
       <div className="flex items-center gap-2">
@@ -146,7 +146,7 @@ export default function BidPanel({ lotId, basePrice, initialEndAt, initialPrice 
               : "bg-teal-600 hover:bg-teal-700")
           }
         >
-          {isClosed ? "مزایده تمام شده" : loading ? "در حال ثبت…" : "ثبت پیشنهاد"}
+          {isClosed ? "?????? ???? ???" : loading ? "?? ??? ???�" : "??? ???????"}
         </button>
       </div>
     </div>

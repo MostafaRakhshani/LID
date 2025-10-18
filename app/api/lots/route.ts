@@ -1,80 +1,52 @@
-export const runtime = "nodejs";
-import prisma from "@/lib/prisma";
+﻿export const revalidate = 0;
+import { NextResponse } from "next/server";
+import prisma from "../../../lib/prisma";
 
-type LotDTO = {
-  id: string; title: string; category: string;
-  basePrice: number; currentPrice?: number;
-  startAt?: string; endAt: string; images: string[];
-  description?: string;
-};
-
-function toDTO(l: any): LotDTO {
-  return {
-    id: l.id, title: l.title, category: l.category,
-    basePrice: l.basePrice, currentPrice: l.currentPrice,
-    startAt: l.startAt?.toISOString?.(), endAt: l.endAt?.toISOString?.() ?? l.endAt,
-    images: l.imageUrl ? [l.imageUrl] : ["/placeholder.png"],
-    description: l.description ?? "",
-  };
-}
+type SortKey = "endAt" | "currentPrice" | "basePrice" | "title" | "status";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const id = searchParams.get("id");
-  if (id) {
-    const lot = await prisma.lot.findUnique({ where: { id } });
-    if (!lot) return new Response("not found", { status: 404 });
-    return Response.json({ lot: toDTO(lot) });
-  }
-  const lots = await prisma.lot.findMany({ orderBy: { createdAt: "desc" } });
-  return Response.json({ lots: lots.map(toDTO) });
+  const page = Math.max(1, parseInt(searchParams.get("page") ?? "1") || 1);
+  const q = (searchParams.get("q") ?? "").trim();
+  const sort = (searchParams.get("sort") ?? "endAt") as SortKey;
+  const dir = (searchParams.get("dir") ?? "asc") as "asc" | "desc";
+  const status = (searchParams.get("status") ?? "ALL") as "OPEN" | "CLOSED" | "ALL";
+  const sizeRaw = parseInt(searchParams.get("size") ?? "20", 10);
+  const PAGE_SIZE = [10,20,50,100].includes(sizeRaw) ? sizeRaw : 20;
+
+  const where:any = {};
+  if (status !== "ALL") where.status = status;
+  if (q) where.OR = [{ title: { contains: q, mode: "insensitive" } }, { id: { contains: q, mode: "insensitive" } }];
+
+  const orderBy:any = {}; orderBy[sort] = dir;
+
+  const [total, items] = await Promise.all([
+    prisma.lot.count({ where }),
+    prisma.lot.findMany({
+      where, orderBy,
+      skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE,
+      select: { id:true, title:true, status:true, basePrice:true, currentPrice:true, endAt:true },
+    }),
+  ]);
+
+  return NextResponse.json({ items, page, pages: Math.max(1, Math.ceil(total/PAGE_SIZE)), total });
 }
 
 export async function POST(req: Request) {
-  const b = (await req.json()) as Partial<LotDTO>;
-  if (!b.id || !b.title || !b.basePrice || !b.endAt)
-    return new Response("bad request", { status: 400 });
+  const body = await req.json().catch(() => ({} as any));
+  const title = String(body.title ?? "بدون عنوان");
+  const basePrice = Number(body.basePrice ?? 0);
+  const currentPrice = Number(body.currentPrice ?? basePrice);
+  const endAt = body.endAt ? new Date(body.endAt) : null;
+  const status = body.status === "CLOSED" ? "CLOSED" : "OPEN";
 
-  const created = await prisma.lot.create({
-    data: {
-      id: b.id, title: b.title, category: b.category ?? "",
-      basePrice: Math.trunc(b.basePrice),
-      currentPrice: Math.trunc(b.currentPrice ?? b.basePrice!),
-      startAt: b.startAt ? new Date(b.startAt) : new Date(),
-      endAt: new Date(b.endAt),
-      imageUrl: b.images?.[0] || "/placeholder.png",
-      description: b.description ?? "",
-    },
-  });
-  return Response.json({ lot: toDTO(created) }, { status: 201 });
-}
+  const count = await prisma.lot.count();
+  const id = `LOT-${String(count + 1).padStart(3,"0")}`;
 
-export async function PUT(req: Request) {
-  const b = (await req.json()) as Partial<LotDTO> & { id: string };
-  if (!b.id) return new Response("bad request", { status: 400 });
-
-  const updated = await prisma.lot.update({
-    where: { id: b.id },
-    data: {
-      title: b.title ?? undefined,
-      category: b.category ?? undefined,
-      basePrice: b.basePrice != null ? Math.trunc(b.basePrice) : undefined,
-      currentPrice: b.currentPrice != null ? Math.trunc(b.currentPrice) : undefined,
-      startAt: b.startAt ? new Date(b.startAt) : undefined,
-      endAt: b.endAt ? new Date(b.endAt) : undefined,
-      imageUrl: b.images?.[0] ?? undefined,
-      description: b.description ?? undefined,
-    },
+  const item = await prisma.lot.create({
+    data: { id, title, basePrice, currentPrice, endAt, status },
+    select: { id:true, title:true, status:true, basePrice:true, currentPrice:true, endAt:true },
   });
 
-  return Response.json({ lot: toDTO(updated) });
-}
-
-export async function DELETE(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const id = searchParams.get("id");
-  if (!id) return new Response("id required", { status: 400 });
-  await prisma.bid.deleteMany({ where: { lotId: id } }).catch(() => {});
-  await prisma.lot.delete({ where: { id } });
-  return new Response(null, { status: 204 });
+  return NextResponse.json({ ok:true, item }, { status: 201 });
 }

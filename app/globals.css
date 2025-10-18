@@ -1,10 +1,24 @@
-@import "cropperjs/dist/cropper.css";
-
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* RTL Ùˆ ÙÙˆÙ†Øª */
+:root { color-scheme: light; }
 html { direction: rtl; }
-body { @apply bg-gray-50 text-gray-900; font-family: Vazirmatn, system-ui, -apple-system, Segoe UI, Roboto, Arial, Noto Sans, Liberation Sans, sans-serif; }
-.container { @apply max-w-6xl mx-auto px-4; }
-.card { @apply bg-white rounded-2xl shadow-[0_4px_16px_rgba(0,0,0,0.08)] p-4; }
+body {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, "Vazirmatn", "IRANSans", "Tahoma", sans-serif;
+  background: #f7fafc;
+  color: #111827;
+}
+
+/* Ø¸Ø±Ù Ø§ØµÙ„ÛŒ */
+.container {
+  max-width: 1000px;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+/* Ø¬Ø¯ÙˆÙ„ Ø³Ø§Ø¯Ù‡ */
+table { border-collapse: separate; border-spacing: 0; width: 100%; }
+th, td { border-color: #e5e7eb; }
+thead th { font-weight: 600; }

@@ -1,36 +1,36 @@
-const { PrismaClient, LotStatus } = require("@prisma/client");
+﻿const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-function fromNowMinutes(min) {
-  return new Date(Date.now() + min * 60 * 1000);
-}
-
 async function main() {
-  // دو لات نمونه
+  const now = Date.now();
+
   const lots = [
     {
-      id: "kitchen-1",
-      title: "لوازم آشپزخانه — محموله پلایوت",
-      category: "لوازم خانه",
-      basePrice: 50_000_000,
-      currentPrice: 50_000_000,
-      startAt: new Date(),
-      endAt: fromNowMinutes(60), // یک ساعت بعد
-      imageUrl: "/lots/spoon.jpg",
-      description: "محموله‌ی آزمایشی برای MVP",
-      status: LotStatus.OPEN,
+      id: "LOT-001",
+      title: "محمولهٔ آزمایشی ۱",
+      status: "OPEN",
+      basePrice: 5000000,
+      currentPrice: 5000000,
+      endAt: new Date(now + 2 * 60 * 60 * 1000), // 2 ساعت دیگر
+      imageUrl: "/lots/sample-1.jpg",
     },
     {
-      id: "shaver-1",
-      title: "پوشاک — سری مخلوط",
-      category: "پوشاک",
-      basePrice: 30_000_000,
-      currentPrice: 30_000_000,
-      startAt: new Date(),
-      endAt: fromNowMinutes(45),
-      imageUrl: "/placeholder.png",
-      description: "برای تست جریان مزایده",
-      status: LotStatus.OPEN,
+      id: "LOT-002",
+      title: "محمولهٔ آزمایشی ۲",
+      status: "OPEN",
+      basePrice: 2500000,
+      currentPrice: 2500000,
+      endAt: new Date(now + 3 * 60 * 60 * 1000),
+      imageUrl: "/lots/sample-2.jpg",
+    },
+    {
+      id: "LOT-003",
+      title: "محمولهٔ بسته‌شده",
+      status: "CLOSED",
+      basePrice: 7500000,
+      currentPrice: 8200000,
+      endAt: new Date(now - 24 * 60 * 60 * 1000), // دیروز
+      imageUrl: "/lots/sample-3.jpg",
     },
   ];
 
@@ -41,9 +41,14 @@ async function main() {
       create: l,
     });
   }
-  console.log("Seed done.");
+  console.log("✅ Seed completed");
 }
 
 main()
-  .catch((e) => { console.error(e); process.exit(1); })
-  .finally(async () => { await prisma.$disconnect(); });
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

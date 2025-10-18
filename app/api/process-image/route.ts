@@ -1,4 +1,4 @@
-﻿import sharp from "sharp";
+import sharp from "sharp";
 import { promises as fs } from "fs";
 import path from "path";
 
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     const ok = await fs.stat(inputPath).then(() => true).catch(() => false);
     if (!ok) return new Response("not found", { status: 404 });
 
-    // ابعاد استاندارد
+    // ????? ?????????
     const size = preset === "thumb" ? 400 :
                  preset === "rect"  ? 1200 :
                                       1200; // square
@@ -32,13 +32,13 @@ export async function POST(req: Request) {
     const outPath = path.join(outDir, outName);
 
     await sharp(inputPath)
-      .rotate() // تصحیح EXIF
+      .rotate() // ????? EXIF
       .resize(
         preset === "rect"
           ? { width: size, height: Math.round(size * 3 / 4), fit: "contain", background: "#ffffff" }
           : { width: size, height: size, fit: "contain", background: "#ffffff" }
       )
-      .flatten({ background: "#ffffff" }) // پس‌زمینه سفید
+      .flatten({ background: "#ffffff" }) // ???????? ????
       .sharpen()
       .jpeg({ quality: 85, mozjpeg: true })
       .toFile(outPath);
