@@ -1,11 +1,16 @@
 ﻿import { PrismaClient } from "@prisma/client";
 
-const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
+// الگوی singleton برای جلوگیری از ساخت چند کلاینت در HMR
+declare global {
+  // eslint-disable-next-line no-var
+  var prisma: PrismaClient | undefined;
+}
 
-export const prisma =
-  globalForPrisma.prisma ??
+export const prisma: PrismaClient =
+  global.prisma ??
   new PrismaClient({
-    log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
+    // لاگ‌ها اگر خواستی فعال کن:
+    // log: ["query", "error", "warn"],
   });
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+if (process.env.NODE_ENV !== "production") global.prisma = prisma;

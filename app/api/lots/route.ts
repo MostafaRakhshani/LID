@@ -1,52 +1,105 @@
-﻿export const revalidate = 0;
-import { NextResponse } from "next/server";
-import prisma from "../../../lib/prisma";
+﻿import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
-type SortKey = "endAt" | "currentPrice" | "basePrice" | "title" | "status";
+type SortField = "endAt" | "currentPrice" | "basePrice" | "title" | "status";
+type Dir = "asc" | "desc";
+type Status = "ALL" | "OPEN" | "CLOSED";
+
+const PAGE_DEFAULT = 1;
+const SIZE_DEFAULT = 20;
+const SIZE_ALLOWED = [10, 20, 50, 100] as const;
+const SORT_ALLOWED: SortField[] = ["endAt", "currentPrice", "basePrice", "title", "status"];
 
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const page = Math.max(1, parseInt(searchParams.get("page") ?? "1") || 1);
-  const q = (searchParams.get("q") ?? "").trim();
-  const sort = (searchParams.get("sort") ?? "endAt") as SortKey;
-  const dir = (searchParams.get("dir") ?? "asc") as "asc" | "desc";
-  const status = (searchParams.get("status") ?? "ALL") as "OPEN" | "CLOSED" | "ALL";
-  const sizeRaw = parseInt(searchParams.get("size") ?? "20", 10);
-  const PAGE_SIZE = [10,20,50,100].includes(sizeRaw) ? sizeRaw : 20;
+  try {
+    const url = new URL(req.url);
+    const sp = url.searchParams;
 
-  const where:any = {};
-  if (status !== "ALL") where.status = status;
-  if (q) where.OR = [{ title: { contains: q, mode: "insensitive" } }, { id: { contains: q, mode: "insensitive" } }];
+    const page = Math.max(PAGE_DEFAULT, parseInt(sp.get("page") ?? String(PAGE_DEFAULT), 10) || PAGE_DEFAULT);
+    const sizeRaw = parseInt(sp.get("size") ?? String(SIZE_DEFAULT), 10);
+    const size = (SIZE_ALLOWED as readonly number[]).includes(sizeRaw) ? sizeRaw : SIZE_DEFAULT;
 
-  const orderBy:any = {}; orderBy[sort] = dir;
+    const q = (sp.get("q") ?? "").trim();
+    const sort = (sp.get("sort") as SortField) ?? "endAt";
+    const dir = ((sp.get("dir") as Dir) ?? "asc") === "desc" ? "desc" : "asc";
+    const status = (sp.get("status") as Status) ?? "ALL";
 
-  const [total, items] = await Promise.all([
-    prisma.lot.count({ where }),
-    prisma.lot.findMany({
-      where, orderBy,
-      skip: (page - 1) * PAGE_SIZE, take: PAGE_SIZE,
-      select: { id:true, title:true, status:true, basePrice:true, currentPrice:true, endAt:true },
-    }),
-  ]);
+    const sortField: SortField = SORT_ALLOWED.includes(sort) ? sort : "endAt";
 
-  return NextResponse.json({ items, page, pages: Math.max(1, Math.ceil(total/PAGE_SIZE)), total });
-}
+    const now = new Date();
+    const where: any = { AND: [] as any[] };
 
-export async function POST(req: Request) {
-  const body = await req.json().catch(() => ({} as any));
-  const title = String(body.title ?? "بدون عنوان");
-  const basePrice = Number(body.basePrice ?? 0);
-  const currentPrice = Number(body.currentPrice ?? basePrice);
-  const endAt = body.endAt ? new Date(body.endAt) : null;
-  const status = body.status === "CLOSED" ? "CLOSED" : "OPEN";
+    if (q) {
+      where.AND.push({
+        OR: [
+          { title: { contains: q, mode: "insensitive" } },
+          { id: { contains: q, mode: "insensitive" } },
+        ],
+      });
+    }
 
-  const count = await prisma.lot.count();
-  const id = `LOT-${String(count + 1).padStart(3,"0")}`;
+    if (status !== "ALL") {
+      // اگر ستون status واقعی داری، قسمت‌های اول را نگه دار؛ وگرنه fallback با endAt می‌ماند.
+      where.AND.push(
+        status === "OPEN"
+          ? {
+              OR: [
+                { status: "OPEN" }, // اگر ستون status داری
+                { AND: [{ status: null }, { endAt: { gt: now } }] }, // fallback
+              ],
+            }
+          : {
+              OR: [
+                { status: "CLOSED" }, // اگر ستون status داری
+                { AND: [{ status: null }, { OR: [{ endAt: { lte: now } }, { endAt: null }] }] }, // fallback
+              ],
+            }
+      );
+    }
+    if (where.AND.length === 0) delete where.AND;
 
-  const item = await prisma.lot.create({
-    data: { id, title, basePrice, currentPrice, endAt, status },
-    select: { id:true, title:true, status:true, basePrice:true, currentPrice:true, endAt:true },
-  });
+    const orderBy: any =
+      sortField === "status"
+        ? { endAt: dir } // اگر ستون status نداری، بر اساس endAt سورت می‌کنیم
+        : { [sortField]: dir };
 
-  return NextResponse.json({ ok:true, item }, { status: 201 });
+    const [total, rows] = await Promise.all([
+      prisma.lot.count({ where }),
+      prisma.lot.findMany({
+        where,
+        orderBy,
+        skip: (page - 1) * size,
+        take: size,
+        select: {
+          id: true,
+          title: true,
+          basePrice: true,
+          currentPrice: true,
+          endAt: true,
+          // status: true, // اگر ستون status واقعی داری، این را باز کن
+        },
+      }),
+    ]);
+
+    const items = rows.map((r) => {
+      const computedStatus =
+        // r.status ?? // اگر ستون status واقعی داری، این را باز کن
+        r.endAt ? (r.endAt > now ? "OPEN" : "CLOSED") : "OPEN";
+      return {
+        id: r.id,
+        title: r.title,
+        basePrice: r.basePrice ?? 0,
+        currentPrice: r.currentPrice ?? 0,
+        endAt: r.endAt ? r.endAt.toISOString() : null,
+        status: computedStatus as "OPEN" | "CLOSED",
+      };
+    });
+
+    const pages = Math.max(1, Math.ceil(total / size));
+
+    return NextResponse.json({ items, page, pages, total }, { status: 200 });
+  } catch (err) {
+    console.error("GET /api/lots error:", err);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
 }
