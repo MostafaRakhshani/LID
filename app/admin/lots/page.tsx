@@ -1,6 +1,9 @@
 ﻿import { abs } from "@/lib/abs";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 
 type SearchParams = {
   page?: string;
@@ -36,17 +39,12 @@ function coerce(sp: SearchParams) {
   const dir = (sp.dir ?? "asc") as NonNullable<SearchParams["dir"]>;
   const status = (sp.status ?? "ALL") as NonNullable<SearchParams["status"]>;
   return { page, size, q, sort, dir, status };
-}
-
 function qs(input: Record<string, string | number | undefined>) {
   const s = new URLSearchParams();
   for (const [k, v] of Object.entries(input)) {
     if (v === undefined) continue;
     s.set(k, String(v));
-  }
   return s.toString();
-}
-
 function SortLink({
   label,
   field,
@@ -65,8 +63,6 @@ function SortLink({
       {active ? (sp.dir === "asc" ? " ↑" : " ↓") : ""}
     </Link>
   );
-}
-
 export default async function AdminLotsPage({
   searchParams,
 }: {
@@ -79,7 +75,6 @@ export default async function AdminLotsPage({
   if (!res.ok) {
     if (res.status === 404) notFound();
     throw new Error(`Failed to load lots (${res.status})`);
-  }
   const data: LotsResp = await res.json();
 
   return (
@@ -123,4 +118,4 @@ export default async function AdminLotsPage({
       </table>
     </div>
   );
-}
+
